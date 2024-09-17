@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sixmesh</title>
+    <link rel="stylesheet" href="https://unpkg.com/7.css"> <!-- Windows 7 CSS -->
+    <style>
+        /* Background image for the entire page */
+        body {
+            background-image: url('https://i.imgur.com/fAE9Jqb.jpeg'); /* Updated background image URL */
+            background-size: cover; /* Ensure the background covers the entire page */
+            background-position: center; /* Center the background image */
+            background-repeat: no-repeat; /* Prevent the image from repeating */
+            margin: 0; /* Remove default margin */
+            font-family: "Segoe UI", Tahoma, sans-serif; /* Ensure consistent font across devices */
+            min-height: 100vh; /* Ensure body takes up at least the full height of the viewport */
+            overflow: hidden; /* Prevent scrollbars from appearing due to background scaling */
+        }
+
+        /* Center the popup window */
+        #popup-window {
+            width: 400px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: move; /* Indicate that the element can be dragged */
+        }
+
+        /* Countdown style */
+        #countdown {
+            margin-top: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        /* Center the hidden content */
+        #hidden-content {
+            position: fixed; /* Use fixed positioning */
+            top: 46%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Center the content */
+            text-align: center;
+            display: none;
+        }
+
+        /* Increase the font size of the Countdown link */
+        #hidden-content a {
+            color: white;
+            cursor: pointer;
+            font-size: 20px; /* Adjust the font size as needed */
+            transition: text-shadow 0.3s ease; /* Smooth transition for the glow effect */
+        }
+
+        /* Minor blue glow on hover */
+        #hidden-content a:hover {
+            text-shadow: 0 0 5px rgba(0, 0, 55, 0.5); /* Blue glow effect */
+        }
+
+        /* Ensure the Enter Email button stands out */
+        #email-btn {
+            margin-top: 20px;
+            width: 150px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Hover effect for the close button */
+        .title-bar-controls button[aria-label="Close"]:hover {
+            background-color: red; /* Red background on hover */
+            color: white; /* White 'X' */
+        }
+
+        /* Hover effect for the minimize button */
+        .title-bar-controls button[aria-label="Minimize"]:hover {
+            box-shadow: 0 0 5px yellow; /* Glowing effect with yellow shadow */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Popup Window styled using 7.css -->
+    <div id="popup-window" class="window">
+        <div class="title-bar">
+            <div class="title-bar-text">six.bat</div>
+            <div class="title-bar-controls">
+                <button aria-label="Minimize"></button>
+                <button aria-label="Close" id="close-btn"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <p id="countdown">loading...</p>
+            <button id="email-btn" class="button" onclick="window.location.href='https://forms.gle/jDuwAHW5zdTuvzoCA'">Enter Email</button>
+        </div>
+    </div>
+
+    <!-- Hidden content after closing the window -->
+    <div id="hidden-content">
+        <h1></h1>
+        <a href="#" id="reopen-popup">Click Here to View Countdown</a>
+    </div>
+
+    <script>
+        // JavaScript for Countdown Timer
+        const countdownElement = document.getElementById('countdown');
+        const targetDate = new Date('December 13, 2024 12:00:00').getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                countdownElement.innerHTML = "";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        setInterval(updateCountdown, 1000);
+
+        // Drag and drop functionality
+        const popupWindow = document.getElementById('popup-window');
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        popupWindow.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - popupWindow.getBoundingClientRect().left;
+            offsetY = e.clientY - popupWindow.getBoundingClientRect().top;
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        function onMouseMove(e) {
+            if (isDragging) {
+                let x = e.clientX - offsetX;
+                let y = e.clientY - offsetY;
+
+                // Calculate the new position
+                const maxX = window.innerWidth - popupWindow.offsetWidth;
+                const maxY = window.innerHeight - popupWindow.offsetHeight;
+
+                // Ensure the window stays within the bounds of the viewport
+                x = Math.max(0, Math.min(x, maxX));
+                y = Math.max(0, Math.min(y, maxY));
+
+                popupWindow.style.left = `${x}px`;
+                popupWindow.style.top = `${y}px`;
+                popupWindow.style.transform = 'none'; // Disable the translate transform when dragging
+            }
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            // Recenter the window if it's dragged out of bounds
+            const rect = popupWindow.getBoundingClientRect();
+            if (rect.left < 0 || rect.top < 0 || rect.right > window.innerWidth || rect.bottom > window.innerHeight) {
+                centerPopup();
+            }
+        }
+
+        // Function to center the popup window
+        function centerPopup() {
+            const popupWidth = popupWindow.offsetWidth;
+            const popupHeight = popupWindow.offsetHeight;
+            popupWindow.style.left = `${(window.innerWidth - popupWidth) / 2}px`;
+            popupWindow.style.top = `${(window.innerHeight - popupHeight) / 2}px`;
+        }
+
+        // Hide popup and show hidden content when 'X' is clicked
+        document.getElementById('close-btn').addEventListener('click', function() {
+            document.getElementById('popup-window').style.display = 'none';
+            document.getElementById('hidden-content').style.display = 'block';
+        });
+
+        // Reopen popup and center it when 'Countdown' link is clicked
+        document.getElementById('reopen-popup').addEventListener('click', function() {
+            document.getElementById('popup-window').style.display = 'block';
+            document.getElementById('hidden-content').style.display = 'none';
+            centerPopup(); // Center the popup window when reopening
+        });
+    </script>
+</body>
+</html>
